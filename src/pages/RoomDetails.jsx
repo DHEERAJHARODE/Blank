@@ -9,6 +9,7 @@ import {
   query,
   where,
   getDocs,
+  Timestamp,
 } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 
@@ -26,7 +27,6 @@ const RoomDetails = () => {
         setRoom({ id: snap.id, ...snap.data() });
       }
     };
-
     fetchRoom();
   }, [id]);
 
@@ -39,11 +39,8 @@ const RoomDetails = () => {
         where("roomId", "==", id),
         where("seekerId", "==", user.uid)
       );
-
       const snap = await getDocs(q);
-      if (!snap.empty) {
-        setAlreadyRequested(true);
-      }
+      if (!snap.empty) setAlreadyRequested(true);
     };
 
     checkRequest();
@@ -55,12 +52,25 @@ const RoomDetails = () => {
       return;
     }
 
+    // 1️⃣ Create booking
     await addDoc(collection(db, "bookings"), {
       roomId: id,
+      roomTitle: room.title,
       ownerId: room.ownerId,
       seekerId: user.uid,
       status: "pending",
-      createdAt: new Date(),
+      createdAt: Timestamp.now(),
+    });
+
+    // 2️⃣ Notify owner
+    await addDoc(collection(db, "notifications"), {
+      userId: room.ownerId,
+      message: `📩 You got a booking request for "${room.title}"`,
+      type: "booking",
+      roomId: id,
+      redirectTo: "/booking-requests",
+      read: false,
+      createdAt: Timestamp.now(),
     });
 
     setAlreadyRequested(true);
@@ -80,10 +90,7 @@ const RoomDetails = () => {
       {isBooked && <p style={{ color: "red" }}>❌ Room already booked</p>}
 
       {!isBooked && user?.uid !== room.ownerId && (
-        <button
-          onClick={handleBooking}
-          disabled={alreadyRequested}
-        >
+        <button onClick={handleBooking} disabled={alreadyRequested}>
           {alreadyRequested ? "Request Sent" : "Request Booking"}
         </button>
       )}

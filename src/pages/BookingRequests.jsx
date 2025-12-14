@@ -10,6 +10,8 @@ import {
   updateDoc,
   getDoc,
   getDocs,
+  addDoc,
+  Timestamp,
 } from "firebase/firestore";
 
 const BookingRequests = () => {
@@ -34,7 +36,9 @@ const BookingRequests = () => {
         list.push({
           id: docSnap.id,
           ...data,
-          roomTitle: roomSnap.exists() ? roomSnap.data().title : "Unknown Room",
+          roomTitle: roomSnap.exists()
+            ? roomSnap.data().title
+            : "Unknown Room",
         });
       }
 
@@ -44,18 +48,30 @@ const BookingRequests = () => {
     return () => unsubscribe();
   }, [user]);
 
+  // ✅ ACCEPT BOOKING
   const handleAccept = async (booking) => {
-    // 1️⃣ Accept current booking
+    // 1️⃣ Accept booking
     await updateDoc(doc(db, "bookings", booking.id), {
       status: "accepted",
     });
 
-    // 2️⃣ Mark room as booked
+    // 2️⃣ Mark room booked
     await updateDoc(doc(db, "rooms", booking.roomId), {
       status: "booked",
     });
 
-    // 3️⃣ Reject all other bookings for same room
+    // 3️⃣ Notify accepted seeker (FIXED ROUTE)
+    await addDoc(collection(db, "notifications"), {
+      userId: booking.seekerId,
+      message: `🎉 Your booking for "${booking.roomTitle}" was accepted`,
+      type: "booking",
+      roomId: booking.roomId,
+      redirectTo: `/room/${booking.roomId}`, // ✅ FIXED
+      read: false,
+      createdAt: Timestamp.now(),
+    });
+
+    // 4️⃣ Reject other pending bookings
     const q = query(
       collection(db, "bookings"),
       where("roomId", "==", booking.roomId),
@@ -65,17 +81,40 @@ const BookingRequests = () => {
     const snap = await getDocs(q);
 
     snap.forEach(async (d) => {
+      const data = d.data();
+
       await updateDoc(doc(db, "bookings", d.id), {
         status: "rejected",
       });
+
+      await addDoc(collection(db, "notifications"), {
+        userId: data.seekerId,
+        message: `❌ Booking rejected. Room already booked.`,
+        type: "booking",
+        roomId: booking.roomId,
+        redirectTo: `/room/${booking.roomId}`, // ✅ FIXED
+        read: false,
+        createdAt: Timestamp.now(),
+      });
     });
 
-    alert("Booking accepted & room booked!");
+    alert("Booking accepted!");
   };
 
-  const handleReject = async (id) => {
-    await updateDoc(doc(db, "bookings", id), {
+  // ❌ REJECT BOOKING
+  const handleReject = async (booking) => {
+    await updateDoc(doc(db, "bookings", booking.id), {
       status: "rejected",
+    });
+
+    await addDoc(collection(db, "notifications"), {
+      userId: booking.seekerId,
+      message: `❌ Your booking for "${booking.roomTitle}" was rejected`,
+      type: "booking",
+      roomId: booking.roomId,
+      redirectTo: `/room/${booking.roomId}`, // ✅ FIXED
+      read: false,
+      createdAt: Timestamp.now(),
     });
   };
 
@@ -91,11 +130,9 @@ const BookingRequests = () => {
 
           {req.status === "pending" && (
             <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => handleAccept(req)}>
-                ✔ Accept
-              </button>
+              <button onClick={() => handleAccept(req)}>✔ Accept</button>
               <button
-                onClick={() => handleReject(req.id)}
+                onClick={() => handleReject(req)}
                 style={{ background: "red", color: "#fff" }}
               >
                 ✖ Reject

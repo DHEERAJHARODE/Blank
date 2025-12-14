@@ -26,15 +26,15 @@ const BookingRequests = () => {
       where("ownerId", "==", user.uid)
     );
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
+    const unsub = onSnapshot(q, async (snapshot) => {
       const list = [];
 
-      for (let docSnap of snapshot.docs) {
-        const data = docSnap.data();
+      for (let d of snapshot.docs) {
+        const data = d.data();
         const roomSnap = await getDoc(doc(db, "rooms", data.roomId));
 
         list.push({
-          id: docSnap.id,
+          id: d.id,
           ...data,
           roomTitle: roomSnap.exists()
             ? roomSnap.data().title
@@ -45,78 +45,69 @@ const BookingRequests = () => {
       setRequests(list);
     });
 
-    return () => unsubscribe();
+    return () => unsub();
   }, [user]);
 
-  // ✅ ACCEPT BOOKING
   const handleAccept = async (booking) => {
-    // 1️⃣ Accept booking
-    await updateDoc(doc(db, "bookings", booking.id), {
-      status: "accepted",
-    });
+  if (booking.notificationSent) return; // 🔒 SAFETY
 
-    // 2️⃣ Mark room booked
-    await updateDoc(doc(db, "rooms", booking.roomId), {
-      status: "booked",
-    });
+  // 1️⃣ Accept booking
+  await updateDoc(doc(db, "bookings", booking.id), {
+    status: "accepted",
+    notificationSent: true,
+  });
 
-    // 3️⃣ Notify accepted seeker (FIXED ROUTE)
-    await addDoc(collection(db, "notifications"), {
-      userId: booking.seekerId,
-      message: `🎉 Your booking for "${booking.roomTitle}" was accepted`,
-      type: "booking",
-      roomId: booking.roomId,
-      redirectTo: `/room/${booking.roomId}`, // ✅ FIXED
-      read: false,
-      createdAt: Timestamp.now(),
-    });
+  // 2️⃣ Mark room booked
+  await updateDoc(doc(db, "rooms", booking.roomId), {
+    status: "booked",
+  });
 
-    // 4️⃣ Reject other pending bookings
-    const q = query(
-      collection(db, "bookings"),
-      where("roomId", "==", booking.roomId),
-      where("status", "==", "pending")
-    );
+  // 3️⃣ Notify accepted seeker (ONLY ONCE)
+  await addDoc(collection(db, "notifications"), {
+    userId: booking.seekerId,
+    message: `🎉 Your booking for "${booking.roomTitle}" was accepted`,
+    redirectTo: `/room/${booking.roomId}`,
+    read: false,
+    createdAt: Timestamp.now(),
+  });
 
-    const snap = await getDocs(q);
+  // 4️⃣ Reject others WITHOUT notifications
+  const q = query(
+    collection(db, "bookings"),
+    where("roomId", "==", booking.roomId),
+    where("status", "==", "pending")
+  );
 
-    snap.forEach(async (d) => {
-      const data = d.data();
+  const snap = await getDocs(q);
 
-      await updateDoc(doc(db, "bookings", d.id), {
-        status: "rejected",
-      });
-
-      await addDoc(collection(db, "notifications"), {
-        userId: data.seekerId,
-        message: `❌ Booking rejected. Room already booked.`,
-        type: "booking",
-        roomId: booking.roomId,
-        redirectTo: `/room/${booking.roomId}`, // ✅ FIXED
-        read: false,
-        createdAt: Timestamp.now(),
-      });
-    });
-
-    alert("Booking accepted!");
-  };
-
-  // ❌ REJECT BOOKING
-  const handleReject = async (booking) => {
-    await updateDoc(doc(db, "bookings", booking.id), {
+  snap.forEach(async (d) => {
+    await updateDoc(doc(db, "bookings", d.id), {
       status: "rejected",
+      notificationSent: true,
     });
+  });
 
-    await addDoc(collection(db, "notifications"), {
-      userId: booking.seekerId,
-      message: `❌ Your booking for "${booking.roomTitle}" was rejected`,
-      type: "booking",
-      roomId: booking.roomId,
-      redirectTo: `/room/${booking.roomId}`, // ✅ FIXED
-      read: false,
-      createdAt: Timestamp.now(),
-    });
-  };
+  alert("Booking accepted!");
+};
+
+
+  const handleReject = async (booking) => {
+  if (booking.notificationSent) return; // 🔒 SAFETY
+
+  await updateDoc(doc(db, "bookings", booking.id), {
+    status: "rejected",
+    notificationSent: true,
+  });
+
+  await addDoc(collection(db, "notifications"), {
+    userId: booking.seekerId,
+    message: `❌ Your booking for "${booking.roomTitle}" was rejected`,
+    redirectTo: `/room/${booking.roomId}`,
+    read: false,
+    createdAt: Timestamp.now(),
+  });
+};
+
 
   return (
     <div style={{ padding: "20px" }}>
@@ -125,7 +116,7 @@ const BookingRequests = () => {
       {requests.map((req) => (
         <div key={req.id} style={styles.card}>
           <h3>{req.roomTitle}</h3>
-          <p><b>Seeker ID:</b> {req.seekerId}</p>
+          <p><b>Seeker:</b> {req.seekerId}</p>
           <p><b>Status:</b> {req.status}</p>
 
           {req.status === "pending" && (

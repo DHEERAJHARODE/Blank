@@ -42,7 +42,6 @@ const RoomDetails = () => {
       const snap = await getDocs(q);
       if (!snap.empty) setAlreadyRequested(true);
     };
-
     checkRequest();
   }, [user, id]);
 
@@ -52,17 +51,15 @@ const RoomDetails = () => {
       return;
     }
 
-    // 1️⃣ Create booking
-    await addDoc(collection(db, "bookings"), {
-      roomId: id,
-      roomTitle: room.title,
-      ownerId: room.ownerId,
-      seekerId: user.uid,
-      status: "pending",
-      createdAt: Timestamp.now(),
-    });
+  await addDoc(collection(db, "bookings"), {
+  roomId: id,
+  ownerId: room.ownerId,
+  seekerId: user.uid,
+  status: "pending",
+  notificationSent: false, // 🔑 IMPORTANT
+  createdAt: new Date(),
+  });
 
-    // 2️⃣ Notify owner
     await addDoc(collection(db, "notifications"), {
       userId: room.ownerId,
       message: `📩 You got a booking request for "${room.title}"`,
@@ -79,17 +76,17 @@ const RoomDetails = () => {
 
   if (!room) return <p>Loading...</p>;
 
-  const isBooked = room.status === "booked";
-
   return (
     <div style={{ padding: "20px" }}>
       <h2>{room.title}</h2>
       <p><b>Rent:</b> ₹{room.rent}</p>
       <p><b>Location:</b> {room.location}</p>
 
-      {isBooked && <p style={{ color: "red" }}>❌ Room already booked</p>}
+      {room.status === "booked" && (
+        <p style={{ color: "red" }}>❌ Room already booked</p>
+      )}
 
-      {!isBooked && user?.uid !== room.ownerId && (
+      {room.status !== "booked" && user?.uid !== room.ownerId && (
         <button onClick={handleBooking} disabled={alreadyRequested}>
           {alreadyRequested ? "Request Sent" : "Request Booking"}
         </button>

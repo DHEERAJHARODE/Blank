@@ -18,12 +18,18 @@ const Navbar = () => {
   const [popup, setPopup] = useState(null);
   const [showList, setShowList] = useState(false);
   const [hideCount, setHideCount] = useState(false);
+
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const lastPopupId = useRef(null); // 🔒 prevent duplicate popup
 
-  // 🔔 FETCH NOTIFICATIONS
+  // 🔔 REAL-TIME NOTIFICATIONS
   useEffect(() => {
-    if (!user) return;
+    if (!user?.uid) {
+      setNotifications([]);
+      setPopup(null);
+      return;
+    }
 
     const q = query(
       collection(db, "notifications"),
@@ -32,47 +38,52 @@ const Navbar = () => {
     );
 
     const unsub = onSnapshot(q, (snap) => {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const list = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+
       setNotifications(list);
 
-      // show popup only for new unread
-      const latestUnread = list.find(n => !n.read);
+      // 🔔 show popup only for NEW unread notification
+      const latestUnread = list.find(
+        (n) => !n.read && n.id !== lastPopupId.current
+      );
+
       if (latestUnread) {
+        lastPopupId.current = latestUnread.id;
         setPopup(latestUnread);
+        setHideCount(false);
+
         setTimeout(() => setPopup(null), 5000);
-        setHideCount(false); // new notification → show count again
       }
     });
 
     return () => unsub();
-  }, [user]);
+  }, [user?.uid]);
 
-  // ❌ CLOSE ON OUTSIDE CLICK
+  // ❌ close dropdown on outside click
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const close = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setShowList(false);
       }
     };
 
-    const handleScroll = () => setShowList(false);
-
-    document.addEventListener("mousedown", handleClickOutside);
-    window.addEventListener("scroll", handleScroll);
+    document.addEventListener("mousedown", close);
+    window.addEventListener("scroll", () => setShowList(false));
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("mousedown", close);
+      window.removeEventListener("scroll", () => setShowList(false));
     };
   }, []);
 
-  // 🔔 BELL CLICK
   const handleBellClick = () => {
-    setShowList(prev => !prev);
-    setHideCount(true); // hide count on bell click
+    setShowList((prev) => !prev);
+    setHideCount(true);
   };
 
-  // 📌 CLICK NOTIFICATION
   const handleNotificationClick = async (n) => {
     if (!n.read) {
       await updateDoc(doc(db, "notifications", n.id), { read: true });
@@ -82,7 +93,7 @@ const Navbar = () => {
     navigate(n.redirectTo);
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <>
@@ -93,8 +104,7 @@ const Navbar = () => {
           <Link to="/">Home</Link>
 
           {user && (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }} ref={dropdownRef}>
-              
+            <div ref={dropdownRef} style={{ position: "relative" }}>
               <Link to="/rooms">Rooms</Link>
               <Link to="/dashboard">Dashboard</Link>
 
@@ -108,10 +118,10 @@ const Navbar = () => {
               {showList && (
                 <div style={styles.dropdown}>
                   {notifications.length === 0 && (
-                    <p style={{ padding: "10px" }}>No notifications</p>
+                    <p style={{ padding: 10 }}>No notifications</p>
                   )}
 
-                  {notifications.map(n => (
+                  {notifications.map((n) => (
                     <div
                       key={n.id}
                       onClick={() => handleNotificationClick(n)}
@@ -121,9 +131,6 @@ const Navbar = () => {
                       }}
                     >
                       <p style={{ margin: 0 }}>{n.message}</p>
-                      <small style={{ color: "#666" }}>
-                        {timeAgo(n.createdAt)}
-                      </small>
                     </div>
                   ))}
                 </div>
@@ -137,41 +144,21 @@ const Navbar = () => {
               <Link to="/register">Register</Link>
             </>
           ) : (
-            <>
-              <button onClick={logout}>Logout</button>
-            </>
+            <button onClick={logout}>Logout</button>
           )}
         </div>
       </nav>
 
-      {/* 🔔 POPUP */}
       {popup && (
-        <div style={styles.popup} onClick={() => handleNotificationClick(popup)}>
+        <div
+          style={styles.popup}
+          onClick={() => handleNotificationClick(popup)}
+        >
           {popup.message}
         </div>
       )}
     </>
   );
-};
-
-// ⏱️ TIME AGO
-const timeAgo = (timestamp) => {
-  const seconds = Math.floor((Date.now() - timestamp.toDate()) / 1000);
-
-  const units = [
-    { s: 31536000, l: "year" },
-    { s: 2592000, l: "month" },
-    { s: 86400, l: "day" },
-    { s: 3600, l: "hour" },
-    { s: 60, l: "minute" },
-  ];
-
-  for (let u of units) {
-    const v = Math.floor(seconds / u.s);
-    if (v >= 1) return `${v} ${u.l}${v > 1 ? "s" : ""} ago`;
-  }
-
-  return "Just now";
 };
 
 const styles = {
@@ -181,51 +168,34 @@ const styles = {
     padding: "10px 20px",
     background: "#f5f5f5",
   },
-  links: {
-    display: "flex",
-    gap: "15px",
-    alignItems: "center",
-  },
-  bell: {
-    cursor: "pointer",
-    fontSize: "18px",
-    position: "relative",
-  },
+  links: { display: "flex", gap: 15, alignItems: "center" },
+  bell: { cursor: "pointer", position: "relative" },
   count: {
     background: "red",
     color: "#fff",
     borderRadius: "50%",
     padding: "2px 6px",
-    fontSize: "12px",
-    marginLeft: "4px",
+    fontSize: 12,
   },
   dropdown: {
     position: "absolute",
     right: 0,
-    top: "25px",
-    width: "320px",
+    top: 25,
+    width: 300,
     background: "#fff",
     border: "1px solid #ccc",
-    borderRadius: "6px",
     zIndex: 1000,
-    maxHeight: "350px",
-    overflowY: "auto",
   },
-  item: {
-    padding: "10px",
-    cursor: "pointer",
-    borderBottom: "1px solid #eee",
-  },
+  item: { padding: 10, cursor: "pointer" },
   popup: {
     position: "fixed",
-    bottom: "20px",
-    right: "20px",
+    bottom: 20,
+    right: 20,
     background: "#323232",
     color: "#fff",
-    padding: "15px 20px",
-    borderRadius: "8px",
+    padding: 15,
+    borderRadius: 8,
     cursor: "pointer",
-    zIndex: 999,
   },
 };
 

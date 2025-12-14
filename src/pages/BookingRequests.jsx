@@ -9,9 +9,9 @@ import {
   doc,
   updateDoc,
   getDoc,
-  getDocs,
   addDoc,
-  Timestamp,
+  getDocs,
+  serverTimestamp,
 } from "firebase/firestore";
 
 const BookingRequests = () => {
@@ -19,26 +19,24 @@ const BookingRequests = () => {
   const [requests, setRequests] = useState([]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.uid) return;
 
     const q = query(
       collection(db, "bookings"),
       where("ownerId", "==", user.uid)
     );
 
-    const unsub = onSnapshot(q, async (snapshot) => {
+    const unsub = onSnapshot(q, async (snap) => {
       const list = [];
 
-      for (let d of snapshot.docs) {
+      for (let d of snap.docs) {
         const data = d.data();
         const roomSnap = await getDoc(doc(db, "rooms", data.roomId));
 
         list.push({
           id: d.id,
           ...data,
-          roomTitle: roomSnap.exists()
-            ? roomSnap.data().title
-            : "Unknown Room",
+          roomTitle: roomSnap.data()?.title,
         });
       }
 
@@ -46,104 +44,61 @@ const BookingRequests = () => {
     });
 
     return () => unsub();
-  }, [user]);
+  }, [user?.uid]);
 
-  const handleAccept = async (booking) => {
-  if (booking.notificationSent) return; // 🔒 SAFETY
+  const accept = async (b) => {
+    await updateDoc(doc(db, "bookings", b.id), { status: "accepted" });
+    await updateDoc(doc(db, "rooms", b.roomId), { status: "booked" });
 
-  // 1️⃣ Accept booking
-  await updateDoc(doc(db, "bookings", booking.id), {
-    status: "accepted",
-    notificationSent: true,
-  });
-
-  // 2️⃣ Mark room booked
-  await updateDoc(doc(db, "rooms", booking.roomId), {
-    status: "booked",
-  });
-
-  // 3️⃣ Notify accepted seeker (ONLY ONCE)
-  await addDoc(collection(db, "notifications"), {
-    userId: booking.seekerId,
-    message: `🎉 Your booking for "${booking.roomTitle}" was accepted`,
-    redirectTo: `/room/${booking.roomId}`,
-    read: false,
-    createdAt: Timestamp.now(),
-  });
-
-  // 4️⃣ Reject others WITHOUT notifications
-  const q = query(
-    collection(db, "bookings"),
-    where("roomId", "==", booking.roomId),
-    where("status", "==", "pending")
-  );
-
-  const snap = await getDocs(q);
-
-  snap.forEach(async (d) => {
-    await updateDoc(doc(db, "bookings", d.id), {
-      status: "rejected",
-      notificationSent: true,
+    await addDoc(collection(db, "notifications"), {
+      userId: b.seekerId,
+      message: `🎉 Booking accepted for "${b.roomTitle}"`,
+      redirectTo: `/room/${b.roomId}`,
+      read: false,
+      createdAt: serverTimestamp(),
     });
-  });
 
-  alert("Booking accepted!");
-};
+    const q = query(
+      collection(db, "bookings"),
+      where("roomId", "==", b.roomId),
+      where("status", "==", "pending")
+    );
 
+    const snap = await getDocs(q);
+    snap.forEach((d) =>
+      updateDoc(doc(db, "bookings", d.id), { status: "rejected" })
+    );
+  };
 
-  const handleReject = async (booking) => {
-  if (booking.notificationSent) return; // 🔒 SAFETY
+  const reject = async (b) => {
+    await updateDoc(doc(db, "bookings", b.id), { status: "rejected" });
 
-  await updateDoc(doc(db, "bookings", booking.id), {
-    status: "rejected",
-    notificationSent: true,
-  });
-
-  await addDoc(collection(db, "notifications"), {
-    userId: booking.seekerId,
-    message: `❌ Your booking for "${booking.roomTitle}" was rejected`,
-    redirectTo: `/room/${booking.roomId}`,
-    read: false,
-    createdAt: Timestamp.now(),
-  });
-};
-
+    await addDoc(collection(db, "notifications"), {
+      userId: b.seekerId,
+      message: `❌ Booking rejected`,
+      redirectTo: `/room/${b.roomId}`,
+      read: false,
+      createdAt: serverTimestamp(),
+    });
+  };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: 20 }}>
       <h2>Booking Requests</h2>
 
-      {requests.map((req) => (
-        <div key={req.id} style={styles.card}>
-          <h3>{req.roomTitle}</h3>
-          <p><b>Seeker:</b> {req.seekerId}</p>
-          <p><b>Status:</b> {req.status}</p>
-
-          {req.status === "pending" && (
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => handleAccept(req)}>✔ Accept</button>
-              <button
-                onClick={() => handleReject(req)}
-                style={{ background: "red", color: "#fff" }}
-              >
-                ✖ Reject
-              </button>
-            </div>
+      {requests.map((r) => (
+        <div key={r.id}>
+          <p>{r.roomTitle}</p>
+          {r.status === "pending" && (
+            <>
+              <button onClick={() => accept(r)}>Accept</button>
+              <button onClick={() => reject(r)}>Reject</button>
+            </>
           )}
         </div>
       ))}
     </div>
   );
-};
-
-const styles = {
-  card: {
-    background: "#fff",
-    padding: "15px",
-    margin: "10px 0",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-  },
 };
 
 export default BookingRequests;

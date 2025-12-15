@@ -9,10 +9,7 @@ const RoomsList = () => {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "rooms"), (snapshot) => {
-      const list = [];
-      snapshot.forEach((doc) =>
-        list.push({ id: doc.id, ...doc.data() })
-      );
+      const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setRooms(list);
     });
 
@@ -22,9 +19,7 @@ const RoomsList = () => {
   return (
     <div className="rooms-page">
       <h2>Available Rooms</h2>
-      <p className="subtitle">
-        Handpicked rooms from trusted owners
-      </p>
+      <p className="subtitle">Handpicked rooms from trusted owners</p>
 
       {rooms.length === 0 && (
         <div className="empty-state">
@@ -34,14 +29,14 @@ const RoomsList = () => {
 
       <div className="rooms-grid">
         {rooms.map((room) => (
-          <Link
-            to={`/room/${room.id}`}
-            className="room-link"
-            key={room.id}
-          >
+          <Link to={`/room/${room.id}`} className="room-link" key={room.id}>
             <div className="room-card">
               <div className="room-image">
-                <span>Room</span>
+                {room.image ? (
+                  <img src={room.image} alt={room.title} />
+                ) : (
+                  <span>Room</span>
+                )}
               </div>
 
               <div className="room-info">

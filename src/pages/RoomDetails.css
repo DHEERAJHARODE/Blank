@@ -6,13 +6,13 @@
 /* HERO */
 .room-hero {
   height: 320px;
-  background: linear-gradient(135deg, #e0e7ff, #f1f5f9);
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 26px;
   font-weight: 600;
   color: #4f46e5;
+  background: linear-gradient(135deg, #e0e7ff, #f1f5f9);
 }
 
 /* CONTENT */

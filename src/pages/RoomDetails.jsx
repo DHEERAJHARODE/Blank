@@ -20,12 +20,14 @@ const RoomDetails = () => {
   const [room, setRoom] = useState(null);
   const [requested, setRequested] = useState(false);
 
+  // Fetch room details
   useEffect(() => {
     getDoc(doc(db, "rooms", id)).then((snap) => {
       if (snap.exists()) setRoom({ id: snap.id, ...snap.data() });
     });
   }, [id]);
 
+  // Check if user already requested booking
   useEffect(() => {
     if (!user) return;
 
@@ -64,9 +66,16 @@ const RoomDetails = () => {
 
   return (
     <div className="room-details-page">
-      {/* IMAGE / HERO */}
-      <div className="room-hero">
-        <span>Room Image</span>
+      {/* HERO IMAGE */}
+      <div
+        className="room-hero"
+        style={{
+          backgroundImage: room.image ? `url(${room.image})` : undefined,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        {!room.image && <span>Room Image</span>}
       </div>
 
       <div className="room-details">
@@ -95,10 +104,7 @@ const RoomDetails = () => {
           )}
 
           {user?.uid !== room.ownerId && room.status !== "booked" && (
-            <button
-              disabled={requested}
-              onClick={handleBooking}
-            >
+            <button disabled={requested} onClick={handleBooking}>
               {requested ? "Request Sent" : "Request Booking"}
             </button>
           )}

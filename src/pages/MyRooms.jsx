@@ -66,6 +66,15 @@ const MyRooms = () => {
       <div className="room-grid">
         {rooms.map((room) => (
           <div className="room-card" key={room.id}>
+            {/* Room Image */}
+            {room.image && (
+              <img
+                src={room.image}
+                alt={room.title}
+                className="room-image"
+              />
+            )}
+
             <div className="room-top">
               <h3>{room.title}</h3>
               <span

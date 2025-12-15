@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../firebase/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import "./EditRoom.css"; // We'll create a CSS file
 
 const EditRoom = () => {
   const { id } = useParams();
@@ -14,69 +15,81 @@ const EditRoom = () => {
 
   useEffect(() => {
     const fetchRoom = async () => {
-      const snap = await getDoc(doc(db, "rooms", id));
-
-      if (snap.exists()) {
-        const data = snap.data();
-        setTitle(data.title);
-        setRent(data.rent);
-        setLocation(data.location);
+      try {
+        const snap = await getDoc(doc(db, "rooms", id));
+        if (snap.exists()) {
+          const data = snap.data();
+          setTitle(data.title);
+          setRent(data.rent);
+          setLocation(data.location);
+        } else {
+          alert("Room not found!");
+          navigate("/my-rooms");
+        }
+      } catch (error) {
+        console.error("Error fetching room:", error);
+        alert("Failed to fetch room data.");
+        navigate("/my-rooms");
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
-
     fetchRoom();
-  }, [id]);
+  }, [id, navigate]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-
-    await updateDoc(doc(db, "rooms", id), {
-      title,
-      rent,
-      location,
-      updatedAt: new Date(),
-    });
-
-    alert("Room updated successfully!");
-    navigate("/my-rooms");
+    try {
+      await updateDoc(doc(db, "rooms", id), {
+        title,
+        rent,
+        location,
+        updatedAt: new Date(),
+      });
+      alert("Room updated successfully!");
+      navigate("/my-rooms");
+    } catch (error) {
+      console.error("Error updating room:", error);
+      alert("Failed to update the room. Please try again.");
+    }
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className="loading">Loading...</p>;
 
   return (
-    <div style={styles.container}>
-      <form onSubmit={handleUpdate} style={styles.form}>
+    <div className="editroom-page">
+      <form onSubmit={handleUpdate} className="editroom-form">
         <h2>Edit Room</h2>
+        <label>Title</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
 
-        <input value={title} onChange={(e) => setTitle(e.target.value)} required />
-        <input value={rent} onChange={(e) => setRent(e.target.value)} required />
-        <input value={location} onChange={(e) => setLocation(e.target.value)} required />
+        <label>Rent</label>
+        <input
+          type="number"
+          value={rent}
+          onChange={(e) => setRent(e.target.value)}
+          required
+        />
 
-        <button type="submit">Update Room</button>
+        <label>Location</label>
+        <input
+          type="text"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          required
+        />
+
+        <button type="submit" className="update-btn">
+          Update Room
+        </button>
       </form>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    minHeight: "80vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  form: {
-    width: "300px",
-    padding: "20px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-    background: "#fff",
-    borderRadius: "10px",
-    border: "1px solid #ccc",
-  },
 };
 
 export default EditRoom;

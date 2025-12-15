@@ -13,6 +13,7 @@ import {
   getDocs,
   serverTimestamp,
 } from "firebase/firestore";
+import "./BookingRequests.css";
 
 const BookingRequests = () => {
   const { user } = useAuth();
@@ -83,20 +84,45 @@ const BookingRequests = () => {
   };
 
   return (
-    <div style={{ padding: 20 }}>
+    <div className="booking-page">
       <h2>Booking Requests</h2>
+      <p className="subtitle">Manage incoming booking requests</p>
 
-      {requests.map((r) => (
-        <div key={r.id}>
-          <p>{r.roomTitle}</p>
-          {r.status === "pending" && (
-            <>
-              <button onClick={() => accept(r)}>Accept</button>
-              <button onClick={() => reject(r)}>Reject</button>
-            </>
-          )}
+      {requests.length === 0 && (
+        <div className="empty">
+          No booking requests yet 📭
         </div>
-      ))}
+      )}
+
+      <div className="booking-list">
+        {requests.map((r) => (
+          <div className="booking-card" key={r.id}>
+            <div className="booking-info">
+              <h4>{r.roomTitle}</h4>
+              <span className={`status ${r.status}`}>
+                {r.status}
+              </span>
+            </div>
+
+            {r.status === "pending" && (
+              <div className="actions">
+                <button
+                  className="accept"
+                  onClick={() => accept(r)}
+                >
+                  Accept
+                </button>
+                <button
+                  className="reject"
+                  onClick={() => reject(r)}
+                >
+                  Reject
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

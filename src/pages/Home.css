@@ -1,0 +1,123 @@
+.home {
+  font-family: "Inter", sans-serif;
+}
+
+/* HERO */
+.hero {
+  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  padding: 80px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-content {
+  max-width: 700px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 42px;
+  font-weight: 700;
+}
+
+.hero h1 span {
+  color: #4f46e5;
+}
+
+.hero p {
+  margin-top: 12px;
+  color: #555;
+  font-size: 16px;
+}
+
+.hero-buttons {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.hero-buttons button {
+  padding: 14px 22px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+  background: #4f46e5;
+  color: white;
+}
+
+.hero-buttons .secondary {
+  background: white;
+  color: #4f46e5;
+  border: 1px solid #4f46e5;
+}
+
+/* TRUST */
+.trust {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 40px 20px;
+}
+
+.trust-card {
+  background: #fff;
+  padding: 18px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  font-size: 14px;
+}
+
+/* HOW IT WORKS */
+.how {
+  padding: 60px 20px;
+  background: #f9fafb;
+  text-align: center;
+}
+
+.how h2 {
+  margin-bottom: 30px;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.step {
+  background: white;
+  padding: 24px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.step span {
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: white;
+  line-height: 36px;
+  margin-bottom: 10px;
+}
+
+/* OWNER CTA */
+.owner-cta {
+  padding: 70px 20px;
+  text-align: center;
+}
+
+.owner-cta button {
+  margin-top: 16px;
+  padding: 14px 24px;
+  border-radius: 12px;
+  border: none;
+  background: #4f46e5;
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+}

@@ -3,6 +3,7 @@ import { db } from "../firebase/firebaseConfig";
 import { addDoc, collection } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import "./AddRoom.css";
 
 const AddRoom = () => {
   const { user } = useAuth();
@@ -23,66 +24,61 @@ const AddRoom = () => {
         rent,
         location,
         ownerId: user.uid,
+        status: "available",
         createdAt: new Date(),
       });
 
-      alert("Room added successfully!");
+      alert("Room listed successfully 🎉");
       navigate("/dashboard");
     } catch (err) {
       alert(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
-    <div style={styles.container}>
-      <form onSubmit={handleAddRoom} style={styles.form}>
-        <h2>Add New Room</h2>
+    <div className="add-room-page">
+      <form className="add-room-card" onSubmit={handleAddRoom}>
+        <h2>List a New Room</h2>
+        <p className="subtitle">
+          Fill in the details to start receiving booking requests
+        </p>
 
-        <input
-          placeholder="Room Title"
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
+        <div className="form-group">
+          <label>Room Title</label>
+          <input
+            placeholder="e.g. Fully furnished room near metro"
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+        </div>
 
-        <input
-          placeholder="Rent Price"
-          onChange={(e) => setRent(e.target.value)}
-          required
-        />
+        <div className="form-group">
+          <label>Monthly Rent (₹)</label>
+          <input
+            type="number"
+            placeholder="e.g. 8000"
+            onChange={(e) => setRent(e.target.value)}
+            required
+          />
+        </div>
 
-        <input
-          placeholder="Location"
-          onChange={(e) => setLocation(e.target.value)}
-          required
-        />
+        <div className="form-group">
+          <label>Location</label>
+          <input
+            placeholder="e.g. Andheri East, Mumbai"
+            onChange={(e) => setLocation(e.target.value)}
+            required
+          />
+        </div>
 
         <button disabled={loading} type="submit">
-          {loading ? "Saving..." : "Add Room"}
+          {loading ? "Saving..." : "Publish Room"}
         </button>
       </form>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    minHeight: "80vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  form: {
-    width: "300px",
-    padding: "20px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-    background: "#fff",
-    borderRadius: "10px",
-    border: "1px solid #ccc",
-  },
 };
 
 export default AddRoom;

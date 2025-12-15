@@ -12,6 +12,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
+import "./RoomDetails.css";
 
 const RoomDetails = () => {
   const { id } = useParams();
@@ -62,16 +63,53 @@ const RoomDetails = () => {
   if (!room) return null;
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>{room.title}</h2>
+    <div className="room-details-page">
+      {/* IMAGE / HERO */}
+      <div className="room-hero">
+        <span>Room Image</span>
+      </div>
 
-      {room.status === "booked" && <p>❌ Room booked</p>}
+      <div className="room-details">
+        <div className="room-main">
+          <h1>{room.title}</h1>
+          <p className="location">📍 {room.location}</p>
 
-      {user?.uid !== room.ownerId && room.status !== "booked" && (
-        <button disabled={requested} onClick={handleBooking}>
-          {requested ? "Request Sent" : "Request Booking"}
-        </button>
-      )}
+          <div className="features">
+            <span>✅ Verified Owner</span>
+            <span>🔒 Safe Stay</span>
+            <span>🏠 Real Listing</span>
+          </div>
+
+          <p className="description">
+            Comfortable room available for rent with all basic amenities.
+            Ideal for students and working professionals.
+          </p>
+        </div>
+
+        {/* BOOKING CARD */}
+        <div className="booking-card">
+          <h3>₹ {room.rent} <span>/ month</span></h3>
+
+          {room.status === "booked" && (
+            <p className="booked">❌ Room already booked</p>
+          )}
+
+          {user?.uid !== room.ownerId && room.status !== "booked" && (
+            <button
+              disabled={requested}
+              onClick={handleBooking}
+            >
+              {requested ? "Request Sent" : "Request Booking"}
+            </button>
+          )}
+
+          {!user && (
+            <p className="login-note">
+              Please login to request booking
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

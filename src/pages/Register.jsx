@@ -3,6 +3,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
+import "./Register.css";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -17,7 +18,6 @@ const Register = () => {
     setLoading(true);
 
     try {
-      // 1️⃣ Create Auth user
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -26,10 +26,9 @@ const Register = () => {
 
       const user = userCredential.user;
 
-      // 2️⃣ Save user data in Firestore
       await setDoc(doc(db, "users", user.uid), {
         email: user.email,
-        role: role,
+        role,
         createdAt: new Date(),
       });
 
@@ -43,13 +42,16 @@ const Register = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <form onSubmit={handleRegister} style={styles.form}>
-        <h2>Register</h2>
+    <div className="register-container">
+      <form className="register-card" onSubmit={handleRegister}>
+        <h2>Create your account</h2>
+        <p className="subtitle">
+          Join trusted room owners & seekers across India
+        </p>
 
         <input
           type="email"
-          placeholder="Email"
+          placeholder="Email address"
           required
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -61,36 +63,43 @@ const Register = () => {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <select onChange={(e) => setRole(e.target.value)}>
-          <option value="room-seeker">Room Seeker</option>
-          <option value="owner">Owner</option>
-        </select>
+        <div className="role-section">
+          <p className="role-title">I am here to</p>
+
+          <div className="role-options">
+            <div
+              className={`role-card ${
+                role === "room-seeker" ? "active" : ""
+              }`}
+              onClick={() => setRole("room-seeker")}
+            >
+              🧳
+              <h4>Find a Room</h4>
+              <span>Book safe & verified rooms</span>
+            </div>
+
+            <div
+              className={`role-card ${role === "owner" ? "active" : ""}`}
+              onClick={() => setRole("owner")}
+            >
+              🏠
+              <h4>List My Room</h4>
+              <span>Earn by renting your space</span>
+            </div>
+          </div>
+        </div>
 
         <button type="submit" disabled={loading}>
-          {loading ? "Creating..." : "Register"}
+          {loading ? "Creating account..." : "Get Started"}
         </button>
+
+        <p className="login-text">
+          Already have an account?{" "}
+          <span onClick={() => navigate("/login")}>Login</span>
+        </p>
       </form>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    minHeight: "80vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  form: {
-    width: "300px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-    padding: "20px",
-    border: "1px solid #ccc",
-    borderRadius: "8px",
-    background: "#fff",
-  },
 };
 
 export default Register;

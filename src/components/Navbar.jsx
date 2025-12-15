@@ -11,19 +11,21 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
-
+import { FiMenu, FiX } from "react-icons/fi";
+import "./Navbar.css";
 const Navbar = () => {
   const { user, logout } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [popup, setPopup] = useState(null);
   const [showList, setShowList] = useState(false);
   const [hideCount, setHideCount] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
-  const lastPopupId = useRef(null); // 🔒 prevent duplicate popup
+  const lastPopupId = useRef(null);
 
-  // 🔔 REAL-TIME NOTIFICATIONS
+  // 🔔 Real-time notifications
   useEffect(() => {
     if (!user?.uid) {
       setNotifications([]);
@@ -45,7 +47,6 @@ const Navbar = () => {
 
       setNotifications(list);
 
-      // 🔔 show popup only for NEW unread notification
       const latestUnread = list.find(
         (n) => !n.read && n.id !== lastPopupId.current
       );
@@ -54,7 +55,6 @@ const Navbar = () => {
         lastPopupId.current = latestUnread.id;
         setPopup(latestUnread);
         setHideCount(false);
-
         setTimeout(() => setPopup(null), 5000);
       }
     });
@@ -62,7 +62,7 @@ const Navbar = () => {
     return () => unsub();
   }, [user?.uid]);
 
-  // ❌ close dropdown on outside click
+  // ❌ Close dropdown on outside click
   useEffect(() => {
     const close = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -71,16 +71,11 @@ const Navbar = () => {
     };
 
     document.addEventListener("mousedown", close);
-    window.addEventListener("scroll", () => setShowList(false));
-
-    return () => {
-      document.removeEventListener("mousedown", close);
-      window.removeEventListener("scroll", () => setShowList(false));
-    };
+    return () => document.removeEventListener("mousedown", close);
   }, []);
 
   const handleBellClick = () => {
-    setShowList((prev) => !prev);
+    setShowList((p) => !p);
     setHideCount(true);
   };
 
@@ -97,45 +92,45 @@ const Navbar = () => {
 
   return (
     <>
-      <nav style={styles.nav}>
-        <h3>RoomRent</h3>
+      <nav className="navbar">
+        <h3 className="logo">Stay Safe</h3>
 
-        <div style={styles.links}>
+        {/* Desktop */}
+        <div className="nav-links desktop">
           <Link to="/">Home</Link>
 
           {user && (
-            <div ref={dropdownRef} style={{ position: "relative" }}>
+            <>
               <Link to="/rooms">Rooms</Link>
-              <Link to="/dashboard"> Dashboard</Link>
+              <Link to="/dashboard">Dashboard</Link>
 
-              <span style={styles.bell} onClick={handleBellClick}>
-                🔔
-                {!hideCount && unreadCount > 0 && (
-                  <span style={styles.count}>{unreadCount}</span>
-                )}
-              </span>
-
-              {showList && (
-                <div style={styles.dropdown}>
-                  {notifications.length === 0 && (
-                    <p style={{ padding: 10 }}>No notifications</p>
+              <div ref={dropdownRef} className="notification">
+                <span className="bell" onClick={handleBellClick}>
+                  🔔
+                  {!hideCount && unreadCount > 0 && (
+                    <span className="badge">{unreadCount}</span>
                   )}
+                </span>
 
-                  {notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      onClick={() => handleNotificationClick(n)}
-                      style={{
-                        ...styles.item,
-                        background: n.read ? "#f5f5f5" : "#e6f7ff",
-                      }}
-                    >
-                      <p style={{ margin: 0 }}>{n.message}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                {showList && (
+                  <div className="dropdown">
+                    {notifications.length === 0 && (
+                      <p className="empty">No notifications</p>
+                    )}
+
+                    {notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className={`item ${n.read ? "" : "unread"}`}
+                        onClick={() => handleNotificationClick(n)}
+                      >
+                        {n.message}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
           {!user ? (
@@ -144,59 +139,80 @@ const Navbar = () => {
               <Link to="/register">Register</Link>
             </>
           ) : (
-            <button onClick={logout}>Logout</button>
+            <button
+              className="logout"
+              onClick={async () => {
+                await logout();   // call your AuthContext logout
+                navigate("/login"); // redirect to login page
+              }}
+            >
+              Logout
+            </button>
           )}
+        </div>
+
+        {/* 🍔 Mobile Icon */}
+        <div className="mobile-menu" onClick={() => setMobileOpen(true)}>
+          <FiMenu size={24} />
         </div>
       </nav>
 
+      {/* 🌑 Overlay */}
+      {mobileOpen && (
+        <div className="overlay" onClick={() => setMobileOpen(false)} />
+      )}
+
+      {/* 📱 Sidebar */}
+      <div className={`sidebar ${mobileOpen ? "open" : ""}`}>
+        <div className="close" onClick={() => setMobileOpen(false)}>
+          <FiX size={22} />
+        </div>
+
+        <Link onClick={() => setMobileOpen(false)} to="/">
+          Home
+        </Link>
+
+        {user && (
+          <>
+            <Link onClick={() => setMobileOpen(false)} to="/rooms">
+              Rooms
+            </Link>
+            <Link onClick={() => setMobileOpen(false)} to="/dashboard">
+              Dashboard
+            </Link>
+            <Link
+              onClick={() => setMobileOpen(false)}
+              to="/booking-requests"
+            >
+              Booking Requests
+            </Link>
+          </>
+        )}
+
+        {!user ? (
+          <>
+            <Link onClick={() => setMobileOpen(false)} to="/login">
+              Login
+            </Link>
+            <Link onClick={() => setMobileOpen(false)} to="/register">
+              Register
+            </Link>
+          </>
+        ) : (
+          <button className="logout" onClick={logout}>
+            Logout
+          </button>
+        )}
+      </div>
+
+      {/* 🔔 Popup */}
       {popup && (
-        <div
-          style={styles.popup}
-          onClick={() => handleNotificationClick(popup)}
-        >
+        <div className="popup" onClick={() => handleNotificationClick(popup)}>
           {popup.message}
         </div>
       )}
     </>
   );
-};
-
-const styles = {
-  nav: {
-    display: "flex",
-    justifyContent: "space-between",
-    padding: "10px 20px",
-    background: "#f5f5f5",
-  },
-  links: { display: "flex", gap: 15, alignItems: "center" },
-  bell: { cursor: "pointer", position: "relative" },
-  count: {
-    background: "red",
-    color: "#fff",
-    borderRadius: "50%",
-    padding: "2px 6px",
-    fontSize: 12,
-  },
-  dropdown: {
-    position: "absolute",
-    right: 0,
-    top: 25,
-    width: 300,
-    background: "#fff",
-    border: "1px solid #ccc",
-    zIndex: 1000,
-  },
-  item: { padding: 10, cursor: "pointer" },
-  popup: {
-    position: "fixed",
-    bottom: 20,
-    right: 20,
-    background: "#323232",
-    color: "#fff",
-    padding: 15,
-    borderRadius: 8,
-    cursor: "pointer",
-  },
 };
 
 export default Navbar;

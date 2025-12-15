@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
+import "./Dashboard.css";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -13,12 +14,8 @@ const Dashboard = () => {
     const fetchRole = async () => {
       if (!user) return;
 
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        setRole(docSnap.data().role);
-      }
+      const docSnap = await getDoc(doc(db, "users", user.uid));
+      if (docSnap.exists()) setRole(docSnap.data().role);
 
       setLoading(false);
     };
@@ -26,13 +23,14 @@ const Dashboard = () => {
     fetchRole();
   }, [user]);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className="loading">Loading dashboard...</p>;
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Dashboard</h2>
-      <p>Welcome, {user.email}</p>
-      <p>Role: {role}</p>
+    <div className="dashboard-page">
+      <div className="dashboard-header">
+        <h2>Dashboard</h2>
+        <p>Welcome back, <span>{user.email}</span></p>
+      </div>
 
       {role === "owner" && <OwnerDashboard />}
       {role === "room-seeker" && <SeekerDashboard />}
@@ -40,36 +38,60 @@ const Dashboard = () => {
   );
 };
 
+/* OWNER */
 const OwnerDashboard = () => {
   const navigate = useNavigate();
 
   return (
-    <div>
-      <h3>Owner Panel</h3>
-      <p>Here you can add/manage your rooms.</p>
+    <>
+      <h3 className="role-title">Owner Panel</h3>
 
-      <button onClick={() => navigate("/add-room")}>
-        + Add New Room
-      </button>
+      <div className="dashboard-grid">
+        <div
+          className="dashboard-card"
+          onClick={() => navigate("/add-room")}
+        >
+          <h4>➕ Add New Room</h4>
+          <p>List a new room for rent</p>
+        </div>
 
-      <button onClick={() => navigate("/my-rooms")}>
-        📂 My Rooms
-      </button>
+        <div
+          className="dashboard-card"
+          onClick={() => navigate("/my-rooms")}
+        >
+          <h4>🏠 My Rooms</h4>
+          <p>View & manage your rooms</p>
+        </div>
 
-      <button onClick={() => navigate("/booking-requests")}>
-        📩 Booking Requests
-      </button>
-
-    </div>
+        <div
+          className="dashboard-card"
+          onClick={() => navigate("/booking-requests")}
+        >
+          <h4>📩 Booking Requests</h4>
+          <p>Approve or reject requests</p>
+        </div>
+      </div>
+    </>
   );
 };
 
-
+/* SEEKER */
 const SeekerDashboard = () => (
-  <div>
-    <h3>Room Seeker Panel</h3>
-    <p>Here you can browse and book rooms.</p>
-  </div>
+  <>
+    <h3 className="role-title">Room Seeker Panel</h3>
+
+    <div className="dashboard-grid">
+      <div className="dashboard-card">
+        <h4>🔍 Browse Rooms</h4>
+        <p>Find rooms that match your needs</p>
+      </div>
+
+      <div className="dashboard-card">
+        <h4>📨 My Requests</h4>
+        <p>Track your booking requests</p>
+      </div>
+    </div>
+  </>
 );
 
 export default Dashboard;

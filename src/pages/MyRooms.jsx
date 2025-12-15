@@ -1,20 +1,16 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { collection, query, where, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
-
-const handleDelete = async (id) => {
-  if (!window.confirm("Are you sure you want to delete this room?")) return;
-
-  try {
-    await deleteDoc(doc(db, "rooms", id));
-    alert("Room deleted successfully!");
-  } catch (err) {
-    console.error(err);
-    alert("There was an issue deleting the room. Please try again later.");
-  }
-};
+import "./MyRooms.css";
 
 const MyRooms = () => {
   const { user } = useAuth();
@@ -31,10 +27,10 @@ const MyRooms = () => {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const list = [];
-      snapshot.forEach((doc) =>
-        list.push({ id: doc.id, ...doc.data() })
-      );
+      const list = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
       setRooms(list);
       setLoading(false);
     });
@@ -42,47 +38,68 @@ const MyRooms = () => {
     return () => unsubscribe();
   }, [user]);
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this room?")) return;
+    await deleteDoc(doc(db, "rooms", id));
+  };
+
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>My Rooms</h2>
+    <div className="myrooms-page">
+      <div className="header">
+        <h2>My Rooms</h2>
+        <button onClick={() => navigate("/add-room")}>
+          + Add Room
+        </button>
+      </div>
 
       {loading && <p>Loading your rooms...</p>}
 
-      {rooms.length === 0 && !loading && <p>No rooms added yet.</p>}
-
-      {rooms.map((room) => (
-        <div key={room.id} style={styles.card}>
-          <h3>{room.title}</h3>
-          <p>Rent: ₹{room.rent}</p>
-          <p>Location: {room.location}</p>
-
-          <div style={{ display: "flex", gap: "10px" }}>
-            <button onClick={() => navigate(`/edit-room/${room.id}`)}>
-              ✏️ Edit
-            </button>
-
-            <button
-              onClick={() => handleDelete(room.id)}
-              style={{ background: "red", color: "#fff" }}
-            >
-              🗑 Delete
-            </button>
-          </div>
+      {!loading && rooms.length === 0 && (
+        <div className="empty">
+          <p>You haven’t added any rooms yet.</p>
+          <button onClick={() => navigate("/add-room")}>
+            List your first room
+          </button>
         </div>
-      ))}
+      )}
+
+      <div className="room-grid">
+        {rooms.map((room) => (
+          <div className="room-card" key={room.id}>
+            <div className="room-top">
+              <h3>{room.title}</h3>
+              <span
+                className={`status ${
+                  room.status === "booked" ? "booked" : "available"
+                }`}
+              >
+                {room.status || "available"}
+              </span>
+            </div>
+
+            <p className="location">{room.location}</p>
+            <p className="rent">₹{room.rent} / month</p>
+
+            <div className="actions">
+              <button
+                className="edit"
+                onClick={() => navigate(`/edit-room/${room.id}`)}
+              >
+                ✏️ Edit
+              </button>
+
+              <button
+                className="delete"
+                onClick={() => handleDelete(room.id)}
+              >
+                🗑 Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
-};
-
-const styles = {
-  card: {
-    background: "#fff",
-    padding: "15px",
-    margin: "10px 0",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-  },
 };
 
 export default MyRooms;

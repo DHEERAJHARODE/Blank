@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
+import "./RoomsList.css";
 
 const RoomsList = () => {
   const [rooms, setRooms] = useState([]);
@@ -9,7 +10,9 @@ const RoomsList = () => {
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "rooms"), (snapshot) => {
       const list = [];
-      snapshot.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
+      snapshot.forEach((doc) =>
+        list.push({ id: doc.id, ...doc.data() })
+      );
       setRooms(list);
     });
 
@@ -17,37 +20,45 @@ const RoomsList = () => {
   }, []);
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="rooms-page">
       <h2>Available Rooms</h2>
+      <p className="subtitle">
+        Handpicked rooms from trusted owners
+      </p>
 
-      {rooms.length === 0 && <p>No rooms available yet.</p>}
+      {rooms.length === 0 && (
+        <div className="empty-state">
+          <p>No rooms available yet 🏠</p>
+        </div>
+      )}
 
-      {rooms.map((room) => (
-        <Link
-          to={`/room/${room.id}`}
-          style={{ textDecoration: "none", color: "black" }}
-          key={room.id}
-        >
-          <div style={styles.card}>
-            <h3>{room.title}</h3>
-            <p>Rent: ₹{room.rent}</p>
-            <p>Location: {room.location}</p>
-          </div>
-        </Link>
-      ))}
+      <div className="rooms-grid">
+        {rooms.map((room) => (
+          <Link
+            to={`/room/${room.id}`}
+            className="room-link"
+            key={room.id}
+          >
+            <div className="room-card">
+              <div className="room-image">
+                <span>Room</span>
+              </div>
+
+              <div className="room-info">
+                <h3>{room.title}</h3>
+                <p className="location">📍 {room.location}</p>
+
+                <div className="room-footer">
+                  <span className="price">₹{room.rent}/month</span>
+                  <span className="view">View</span>
+                </div>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
-};
-
-const styles = {
-  card: {
-    background: "#fff",
-    padding: "15px",
-    margin: "10px 0",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-  },
 };
 
 export default RoomsList;

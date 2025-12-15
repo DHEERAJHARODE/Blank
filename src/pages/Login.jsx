@@ -4,6 +4,7 @@ import { auth, db, messaging } from "../firebase/firebaseConfig";
 import { getToken } from "firebase/messaging";
 import { doc, updateDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import "./Login.css";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -19,7 +20,8 @@ const Login = () => {
       if (permission !== "granted") return;
 
       const token = await getToken(messaging, {
-        vapidKey: "BFRmxxb7F7Ysi6B4RgbXFlzib5Hytpl8Ky_hyUovI9ys-ZMv5kEaA8I4_s-jh4ikMxQgXPwjZKiFo2JlsD1bYtM",
+        vapidKey:
+          "BFRmxxb7F7Ysi6B4RgbXFlzib5Hytpl8Ky_hyUovI9ys-ZMv5kEaA8I4_s-jh4ikMxQgXPwjZKiFo2JlsD1bYtM",
       });
 
       if (!token) return;
@@ -28,8 +30,6 @@ const Login = () => {
         fcmToken: token,
         updatedAt: new Date(),
       });
-
-      console.log("FCM token saved ✅");
     } catch (error) {
       console.error("FCM error:", error);
     }
@@ -48,7 +48,6 @@ const Login = () => {
 
       const user = userCredential.user;
 
-      // 🔥 SAVE TOKEN AFTER LOGIN
       await saveFcmToken(user);
 
       alert("Login successful ✅");
@@ -61,13 +60,14 @@ const Login = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <form onSubmit={handleLogin} style={styles.form}>
-        <h2>Login</h2>
+    <div className="login-container">
+      <form className="login-card" onSubmit={handleLogin}>
+        <h2>Welcome back</h2>
+        <p className="subtitle">Login to continue your journey</p>
 
         <input
           type="email"
-          placeholder="Email"
+          placeholder="Email address"
           required
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -82,28 +82,16 @@ const Login = () => {
         <button type="submit" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </button>
+
+        <p className="register-text">
+          New here?{" "}
+          <span onClick={() => navigate("/register")}>
+            Create an account
+          </span>
+        </p>
       </form>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    minHeight: "80vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  form: {
-    width: "300px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-    padding: "20px",
-    border: "1px solid #ccc",
-    borderRadius: "8px",
-    background: "#fff",
-  },
 };
 
 export default Login;

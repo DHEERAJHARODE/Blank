@@ -8,19 +8,23 @@ import "./Dashboard.css";
 const Dashboard = () => {
   const { user } = useAuth();
   const [role, setRole] = useState("");
+  const [profileImage, setProfileImage] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRole = async () => {
+    const fetchUserData = async () => {
       if (!user) return;
 
-      const docSnap = await getDoc(doc(db, "users", user.uid));
-      if (docSnap.exists()) setRole(docSnap.data().role);
-
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        setRole(data.role);
+        setProfileImage(data.profileImage || "");
+      }
       setLoading(false);
     };
 
-    fetchRole();
+    fetchUserData();
   }, [user]);
 
   if (loading) return <p className="loading">Loading dashboard...</p>;
@@ -28,8 +32,20 @@ const Dashboard = () => {
   return (
     <div className="dashboard-page">
       <div className="dashboard-header">
-        <h2>Dashboard</h2>
-        <p>Welcome back, <span>{user.email}</span></p>
+        {/* PROFILE IMAGE */}
+        <img
+          className="dashboard-avatar"
+          src={
+            profileImage ||
+            "https://www.w3schools.com/howto/img_avatar.png"
+          }
+          alt="User"
+        />
+
+        <h2>My Dashboard</h2>
+        <p>
+          Welcome, <span>{user.email}</span>
+        </p>
       </div>
 
       {role === "owner" && <OwnerDashboard />}
@@ -38,7 +54,8 @@ const Dashboard = () => {
   );
 };
 
-/* OWNER */
+/* ================= OWNER DASHBOARD ================= */
+
 const OwnerDashboard = () => {
   const navigate = useNavigate();
 
@@ -47,51 +64,73 @@ const OwnerDashboard = () => {
       <h3 className="role-title">Owner Panel</h3>
 
       <div className="dashboard-grid">
-        <div
-          className="dashboard-card"
+        <Card
+          title="👤 My Profile"
+          desc="View & edit your profile"
+          onClick={() => navigate("/profile")}
+        />
+
+        <Card
+          title="➕ Add New Room"
+          desc="List a new room for rent"
           onClick={() => navigate("/add-room")}
-        >
-          <h4>➕ Add New Room</h4>
-          <p>List a new room for rent</p>
-        </div>
+        />
 
-        <div
-          className="dashboard-card"
+        <Card
+          title="🏠 My Rooms"
+          desc="View & manage your rooms"
           onClick={() => navigate("/my-rooms")}
-        >
-          <h4>🏠 My Rooms</h4>
-          <p>View & manage your rooms</p>
-        </div>
+        />
 
-        <div
-          className="dashboard-card"
+        <Card
+          title="📩 Booking Requests"
+          desc="Approve or reject requests"
           onClick={() => navigate("/booking-requests")}
-        >
-          <h4>📩 Booking Requests</h4>
-          <p>Approve or reject requests</p>
-        </div>
+        />
       </div>
     </>
   );
 };
 
-/* SEEKER */
-const SeekerDashboard = () => (
-  <>
-    <h3 className="role-title">Room Seeker Panel</h3>
+/* ================= SEEKER DASHBOARD ================= */
 
-    <div className="dashboard-grid">
-      <div className="dashboard-card">
-        <h4>🔍 Browse Rooms</h4>
-        <p>Find rooms that match your needs</p>
-      </div>
+const SeekerDashboard = () => {
+  const navigate = useNavigate();
 
-      <div className="dashboard-card">
-        <h4>📨 My Requests</h4>
-        <p>Track your booking requests</p>
+  return (
+    <>
+      <h3 className="role-title">Room Seeker Panel</h3>
+
+      <div className="dashboard-grid">
+        <Card
+          title="👤 My Profile"
+          desc="Edit personal information"
+          onClick={() => navigate("/profile")}
+        />
+
+        <Card
+          title="🔍 Browse Rooms"
+          desc="Find rooms that match your needs"
+          onClick={() => navigate("/rooms")}
+        />
+
+        <Card
+          title="📨 My Requests"
+          desc="Track booking requests"
+          onClick={() => navigate("/my-requests")}
+        />
       </div>
-    </div>
-  </>
+    </>
+  );
+};
+
+/* ================= CARD COMPONENT ================= */
+
+const Card = ({ title, desc, onClick }) => (
+  <div className="dashboard-card" onClick={onClick}>
+    <h4>{title}</h4>
+    <p>{desc}</p>
+  </div>
 );
 
 export default Dashboard;

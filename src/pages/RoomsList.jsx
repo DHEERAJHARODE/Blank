@@ -6,51 +6,130 @@ import "./RoomsList.css";
 
 const RoomsList = () => {
   const [rooms, setRooms] = useState([]);
+  const [searchLocation, setSearchLocation] = useState("");
+  const [priceSort, setPriceSort] = useState("");
+  const [availabilityFilter, setAvailabilityFilter] = useState("");
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "rooms"), (snapshot) => {
-      const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const list = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
       setRooms(list);
     });
 
     return () => unsubscribe();
   }, []);
 
+  // ✅ Helper: check availability based on date
+  const isAvailableNow = (room) => {
+    if (room.availableNow) return true;
+    if (!room.availableFrom) return false;
+
+    const today = new Date();
+    const availableDate = new Date(room.availableFrom);
+    return availableDate <= today;
+  };
+
+  // ✅ Filter + Sort Logic
+  const filteredRooms = rooms
+    .filter((room) =>
+      room.location
+        .toLowerCase()
+        .includes(searchLocation.toLowerCase())
+    )
+    .filter((room) => {
+      if (availabilityFilter === "now") {
+        return isAvailableNow(room);
+      }
+      if (availabilityFilter === "next") {
+        return !isAvailableNow(room);
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (priceSort === "low") return a.rent - b.rent;
+      if (priceSort === "high") return b.rent - a.rent;
+      return 0;
+    });
+
   return (
     <div className="rooms-page">
       <h2>Available Rooms</h2>
       <p className="subtitle">Handpicked rooms from trusted owners</p>
 
-      {rooms.length === 0 && (
+      {/* ✅ FILTER BAR */}
+      <div className="filter-bar">
+        <input
+          type="text"
+          placeholder="Search by location"
+          value={searchLocation}
+          onChange={(e) => setSearchLocation(e.target.value)}
+        />
+
+        <select onChange={(e) => setPriceSort(e.target.value)}>
+          <option value="">Sort by price</option>
+          <option value="low">Low to High</option>
+          <option value="high">High to Low</option>
+        </select>
+
+        <select onChange={(e) => setAvailabilityFilter(e.target.value)}>
+          <option value="">Availability</option>
+          <option value="now">Available Now</option>
+          <option value="next">Available Later</option>
+        </select>
+      </div>
+
+      {filteredRooms.length === 0 && (
         <div className="empty-state">
-          <p>No rooms available yet 🏠</p>
+          <p>No rooms found 🏠</p>
         </div>
       )}
 
       <div className="rooms-grid">
-        {rooms.map((room) => (
-          <Link to={`/room/${room.id}`} className="room-link" key={room.id}>
-            <div className="room-card">
-              <div className="room-image">
-                {room.image ? (
-                  <img src={room.image} alt={room.title} />
-                ) : (
-                  <span>Room</span>
-                )}
-              </div>
+        {filteredRooms.map((room) => {
+          const availableNow = isAvailableNow(room);
 
-              <div className="room-info">
-                <h3>{room.title}</h3>
-                <p className="location">📍 {room.location}</p>
+          return (
+            <Link
+              to={`/room/${room.id}`}
+              className="room-link"
+              key={room.id}
+            >
+              <div className="room-card">
+                <div className="room-image">
+                  {room.image ? (
+                    <img src={room.image} alt={room.title} />
+                  ) : (
+                    <span>Room</span>
+                  )}
 
-                <div className="room-footer">
-                  <span className="price">₹{room.rent}/month</span>
-                  <span className="view">View</span>
+                  {/* ✅ Availability Badge */}
+                  <span
+                    className={`badge ${
+                      availableNow ? "available" : "upcoming"
+                    }`}
+                  >
+                    {availableNow
+                      ? "Available Now"
+                      : `From ${room.availableFrom}`}
+                  </span>
+                </div>
+
+                <div className="room-info">
+                  <h3>{room.title}</h3>
+                  <p className="location">📍 {room.location}</p>
+
+                  <div className="room-footer">
+                    <span className="price">₹{room.rent}/month</span>
+                    <span className="view">View</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

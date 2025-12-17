@@ -17,23 +17,32 @@ const AddRoom = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // ✅ NEW STATES
+  const [availableNow, setAvailableNow] = useState(true);
+  const [availableFrom, setAvailableFrom] = useState("");
+
   const handleAddRoom = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    if (!availableNow && !availableFrom) {
+      alert("Please select available date");
+      setLoading(false);
+      return;
+    }
 
     try {
       let imageBase64 = null;
 
       if (imageFile) {
-        // Compress image
         const options = {
-          maxSizeMB: 0.5, // max 0.5MB
+          maxSizeMB: 0.5,
           maxWidthOrHeight: 800,
           useWebWorker: true,
         };
+
         const compressedFile = await imageCompression(imageFile, options);
 
-        // Convert to Base64
         imageBase64 = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result);
@@ -44,11 +53,13 @@ const AddRoom = () => {
 
       await addDoc(collection(db, "rooms"), {
         title,
-        rent,
+        rent: Number(rent),
         location,
         image: imageBase64,
         ownerId: user.uid,
         status: "available",
+        availableNow,
+        availableFrom: availableNow ? null : availableFrom,
         createdAt: new Date(),
       });
 
@@ -73,6 +84,7 @@ const AddRoom = () => {
           <label>Room Title</label>
           <input
             placeholder="e.g. Fully furnished room near metro"
+            value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
           />
@@ -83,6 +95,7 @@ const AddRoom = () => {
           <input
             type="number"
             placeholder="e.g. 8000"
+            value={rent}
             onChange={(e) => setRent(e.target.value)}
             required
           />
@@ -92,10 +105,35 @@ const AddRoom = () => {
           <label>Location</label>
           <input
             placeholder="e.g. Andheri East, Mumbai"
+            value={location}
             onChange={(e) => setLocation(e.target.value)}
             required
           />
         </div>
+
+        {/* ✅ Availability */}
+        <div className="form-group checkbox-group">
+          <label>
+            <input
+              type="checkbox"
+              checked={availableNow}
+              onChange={(e) => setAvailableNow(e.target.checked)}
+            />
+            Room is available now
+          </label>
+        </div>
+
+        {!availableNow && (
+          <div className="form-group">
+            <label>Available From</label>
+            <input
+              type="date"
+              value={availableFrom}
+              onChange={(e) => setAvailableFrom(e.target.value)}
+              required
+            />
+          </div>
+        )}
 
         <div className="form-group">
           <label>Room Image</label>
@@ -106,13 +144,13 @@ const AddRoom = () => {
               const file = e.target.files[0];
               setImageFile(file);
 
-              // Preview
               const reader = new FileReader();
               reader.onloadend = () => setImagePreview(reader.result);
               reader.readAsDataURL(file);
             }}
             required
           />
+
           {imagePreview && (
             <img
               src={imagePreview}

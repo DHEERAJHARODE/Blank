@@ -50,6 +50,13 @@
   border-color: #4f46e5;
 }
 
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
 .form-group img {
   max-height: 200px;
   object-fit: cover;

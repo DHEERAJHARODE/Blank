@@ -1,3 +1,4 @@
+/* ================= NAVBAR ================= */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -13,6 +14,7 @@
 .logo {
   font-weight: bold;
   color: #4f46e5;
+  font-size: 20px;
 }
 
 .nav-links {
@@ -24,8 +26,14 @@
 .nav-links a {
   text-decoration: none;
   color: #333;
+  font-weight: 500;
 }
 
+.nav-links a:hover {
+  color: #4f46e5;
+}
+
+/* ================= LOGOUT BUTTON ================= */
 .logout {
   background: #ef4444;
   color: white;
@@ -40,7 +48,22 @@
   background: #dc2626;
 }
 
-/* 🔔 Notification */
+/* ================= PROFILE AVATAR (DESKTOP) ================= */
+.nav-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid #4f46e5;
+  transition: transform 0.2s ease;
+}
+
+.nav-avatar:hover {
+  transform: scale(1.05);
+}
+
+/* ================= NOTIFICATION ================= */
 .notification {
   position: relative;
 }
@@ -48,6 +71,7 @@
 .bell {
   cursor: pointer;
   position: relative;
+  font-size: 18px;
 }
 
 .badge {
@@ -61,21 +85,23 @@
   border-radius: 50%;
 }
 
-/* Dropdown */
+/* ================= DROPDOWN ================= */
 .dropdown {
   position: absolute;
   right: 0;
-  top: 28px;
+  top: 30px;
   width: 280px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
   overflow: hidden;
+  z-index: 1000;
 }
 
 .item {
   padding: 12px;
   cursor: pointer;
+  font-size: 14px;
 }
 
 .item:hover {
@@ -84,6 +110,7 @@
 
 .item.unread {
   background: #eef2ff;
+  font-weight: 500;
 }
 
 .empty {
@@ -92,7 +119,7 @@
   color: #777;
 }
 
-/* Popup */
+/* ================= POPUP ================= */
 .popup {
   position: fixed;
   bottom: 20px;
@@ -103,14 +130,16 @@
   border-radius: 12px;
   cursor: pointer;
   animation: slideIn 0.3s ease;
+  z-index: 3000;
 }
 
-/* Mobile */
+/* ================= MOBILE MENU ICON ================= */
 .mobile-menu {
   display: none;
   cursor: pointer;
 }
 
+/* ================= SIDEBAR ================= */
 .sidebar {
   position: fixed;
   top: 0;
@@ -125,7 +154,7 @@
   box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
   transition: right 0.35s ease;
   z-index: 2000;
-  overflow-y: auto; /* Scrollable if content overflows */
+  overflow-y: auto;
 }
 
 .sidebar.open {
@@ -136,30 +165,56 @@
   text-decoration: none;
   color: #333;
   font-size: 16px;
+  font-weight: 500;
+}
+
+.sidebar a:hover {
+  color: #4f46e5;
 }
 
 .sidebar .logout {
   margin-top: 20px;
-  background: #ef4444;
-  color: white;
-  border: none;
+  width: 100%;
   padding: 10px;
   border-radius: 8px;
+}
+
+/* ================= SIDEBAR PROFILE ================= */
+.sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
   cursor: pointer;
-  transition: background 0.2s ease;
-  width: 100%;
-  text-align: center;
 }
 
-.sidebar .logout:hover {
-  background: #dc2626;
+.sidebar-profile img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #4f46e5;
 }
 
+.sidebar-profile p {
+  margin: 0;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.sidebar-profile span {
+  font-size: 13px;
+  color: #666;
+}
+
+/* ================= CLOSE ICON ================= */
 .close {
   align-self: flex-end;
   cursor: pointer;
 }
 
+/* ================= OVERLAY ================= */
 .overlay {
   position: fixed;
   inset: 0;
@@ -168,7 +223,7 @@
   animation: fadeIn 0.3s ease;
 }
 
-/* Responsive */
+/* ================= RESPONSIVE ================= */
 @media (max-width: 768px) {
   .desktop {
     display: none;
@@ -179,7 +234,7 @@
   }
 }
 
-/* Animations */
+/* ================= ANIMATIONS ================= */
 @keyframes slideIn {
   from {
     transform: translateY(20px);

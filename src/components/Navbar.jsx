@@ -9,6 +9,7 @@ import {
   orderBy,
   doc,
   updateDoc,
+  getDoc
 } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { FiMenu, FiX } from "react-icons/fi";
@@ -21,12 +22,25 @@ const Navbar = () => {
   const [showList, setShowList] = useState(false);
   const [hideCount, setHideCount] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profile, setProfile] = useState(null);
 
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const lastPopupId = useRef(null);
 
-  // 🔔 Real-time notifications
+  /* ================= FETCH USER PROFILE ================= */
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const fetchProfile = async () => {
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists()) setProfile(snap.data());
+    };
+
+    fetchProfile();
+  }, [user?.uid]);
+
+  /* ================= NOTIFICATIONS ================= */
   useEffect(() => {
     if (!user?.uid) {
       setNotifications([]);
@@ -41,11 +55,7 @@ const Navbar = () => {
     );
 
     const unsub = onSnapshot(q, (snap) => {
-      const list = snap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      }));
-
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       setNotifications(list);
 
       const latestUnread = list.find(
@@ -63,31 +73,16 @@ const Navbar = () => {
     return () => unsub();
   }, [user?.uid]);
 
-  // ❌ Close dropdown on outside click
+  /* ================= CLOSE DROPDOWN ================= */
   useEffect(() => {
     const close = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setShowList(false);
       }
     };
-
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
-
-  const handleBellClick = () => {
-    setShowList((p) => !p);
-    setHideCount(true);
-  };
-
-  const handleNotificationClick = async (n) => {
-    if (!n.read) {
-      await updateDoc(doc(db, "notifications", n.id), { read: true });
-    }
-    setPopup(null);
-    setShowList(false);
-    navigate(n.redirectTo);
-  };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -96,7 +91,7 @@ const Navbar = () => {
       <nav className="navbar">
         <h3 className="logo">Stay Safe</h3>
 
-        {/* Desktop */}
+        {/* DESKTOP */}
         <div className="nav-links desktop">
           <Link to="/">Home</Link>
 
@@ -105,8 +100,9 @@ const Navbar = () => {
               <Link to="/rooms">Rooms</Link>
               <Link to="/dashboard">Dashboard</Link>
 
+              {/* 🔔 Notifications */}
               <div ref={dropdownRef} className="notification">
-                <span className="bell" onClick={handleBellClick}>
+                <span className="bell" onClick={() => setShowList(!showList)}>
                   🔔
                   {!hideCount && unreadCount > 0 && (
                     <span className="badge">{unreadCount}</span>
@@ -123,7 +119,15 @@ const Navbar = () => {
                       <div
                         key={n.id}
                         className={`item ${n.read ? "" : "unread"}`}
-                        onClick={() => handleNotificationClick(n)}
+                        onClick={async () => {
+                          if (!n.read) {
+                            await updateDoc(doc(db, "notifications", n.id), {
+                              read: true,
+                            });
+                          }
+                          setShowList(false);
+                          navigate(n.redirectTo);
+                        }}
                       >
                         {n.message}
                       </div>
@@ -131,6 +135,17 @@ const Navbar = () => {
                   </div>
                 )}
               </div>
+
+              {/* 👤 PROFILE AVATAR */}
+              <img
+                src={
+                  profile?.profileImage ||
+                  "https://www.w3schools.com/howto/img_avatar.png"
+                }
+                alt="profile"
+                className="nav-avatar"
+                onClick={() => navigate("/profile")}
+              />
             </>
           )}
 
@@ -152,70 +167,65 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* 🍔 Mobile Icon */}
+        {/* MOBILE ICON */}
         <div className="mobile-menu" onClick={() => setMobileOpen(true)}>
           <FiMenu size={24} />
         </div>
       </nav>
 
-      {/* 🌑 Overlay */}
+      {/* OVERLAY */}
       {mobileOpen && (
         <div className="overlay" onClick={() => setMobileOpen(false)} />
       )}
 
-      {/* 📱 Sidebar */}
+      {/* SIDEBAR */}
       <div className={`sidebar ${mobileOpen ? "open" : ""}`}>
         <div className="close" onClick={() => setMobileOpen(false)}>
           <FiX size={22} />
         </div>
 
-        <Link onClick={() => setMobileOpen(false)} to="/">
-          Home
-        </Link>
-
+        {/* 👤 SIDEBAR PROFILE */}
         {user && (
-          <>
-            <Link onClick={() => setMobileOpen(false)} to="/rooms">
-              Rooms
-            </Link>
-            <Link onClick={() => setMobileOpen(false)} to="/dashboard">
-              Dashboard
-            </Link>
-            <Link
-              onClick={() => setMobileOpen(false)}
-              to="/booking-requests"
-            >
-              Booking Requests
-            </Link>
-          </>
-        )}
-
-        {!user ? (
-          <>
-            <Link onClick={() => setMobileOpen(false)} to="/login">
-              Login
-            </Link>
-            <Link onClick={() => setMobileOpen(false)} to="/register">
-              Register
-            </Link>
-          </>
-        ) : (
-          <button
-            className="logout"
-            onClick={async () => {
-              await logout();
+          <div
+            className="sidebar-profile"
+            onClick={() => {
               setMobileOpen(false);
-              navigate("/login");
+              navigate("/profile");
             }}
           >
-            Logout
-          </button>
+            <img
+              src={
+                profile?.profileImage ||
+                "https://www.w3schools.com/howto/img_avatar.png"
+              }
+              alt="profile"
+            />
+            <div>
+              <p>{profile?.name || "User"}</p>
+              <span>{user.email}</span>
+            </div>
+          </div>
         )}
+
+        <Link onClick={() => setMobileOpen(false)} to="/">Home</Link>
+        <Link onClick={() => setMobileOpen(false)} to="/rooms">Rooms</Link>
+        <Link onClick={() => setMobileOpen(false)} to="/dashboard">Dashboard</Link>
+
+        <button
+          className="logout"
+          onClick={async () => {
+            await logout();
+            setMobileOpen(false);
+            navigate("/login");
+          }}
+        >
+          Logout
+        </button>
       </div>
 
-      {/* 🔔 Popup */}
+      {/* POPUP */}
       {popup && (
-        <div className="popup" onClick={() => handleNotificationClick(popup)}>
+        <div className="popup" onClick={() => navigate(popup.redirectTo)}>
           {popup.message}
         </div>
       )}

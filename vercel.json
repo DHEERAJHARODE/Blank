@@ -1,8 +1,23 @@
 {
-  "rewrites": [
+  //"rewrites": [
+    //{
+      //"source": "/(.*)",
+      //"destination": "/index.html"
+    //}
+  //]
+
+
+  {
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "status": 302,
+      "headers": {
+        "Location": "https://www.google.com/"
+      }
     }
   ]
+}
+
+  
 }

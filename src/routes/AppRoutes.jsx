@@ -13,7 +13,7 @@ import ChooseRole from "../pages/ChooseRole";
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute"; // optional: redirect logged-in users
 import Profile from "../pages/Profile";
-import MyRequests from "../pages/myRequests";
+import MyRequests from "../pages/MyRequests";
 
 const AppRoutes = () => {
   return (

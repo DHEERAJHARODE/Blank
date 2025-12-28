@@ -1,0 +1,55 @@
+.my-requests-page {
+  padding: 40px 20px;
+  background: #f6f8fb;
+  min-height: 100vh;
+  max-width: 900px;
+  margin: auto;
+}
+
+.my-requests-page h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.request-card {
+  background: white;
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+}
+
+.status {
+  font-weight: 600;
+  text-transform: capitalize;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.status.pending {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.status.accepted {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.status.rejected {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.empty {
+  text-align: center;
+  margin-top: 60px;
+  color: #777;
+}

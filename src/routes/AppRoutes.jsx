@@ -13,6 +13,7 @@ import ChooseRole from "../pages/ChooseRole";
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute"; // optional: redirect logged-in users
 import Profile from "../pages/Profile";
+import MyRequests from "../pages/myRequests";
 
 const AppRoutes = () => {
   return (
@@ -83,6 +84,7 @@ const AppRoutes = () => {
       <Route path="/room/:id" element={<RoomDetails />} />
       <Route path="/choose-role" element={<ChooseRole />} />
       <Route path="/profile" element={<Profile />} />
+      <Route path="/my-requests" element={<MyRequests />} />
     </Routes>
   );
 };

@@ -13,24 +13,60 @@
   font-weight: 600;
 }
 
+/* LIST */
 .requests-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
+/* CARD */
 .request-card {
   background: white;
-  padding: 18px;
-  border-radius: 14px;
+  padding: 16px;
+  border-radius: 16px;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+  display: flex;
+  gap: 16px;
+  align-items: center;
 }
 
-.status {
+/* IMAGE */
+.request-room-image {
+  width: 110px;
+  height: 85px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+/* INFO */
+.request-info {
+  flex: 1;
+}
+
+.request-info h4 {
+  margin-bottom: 6px;
+  font-size: 18px;
+}
+
+.location {
+  font-size: 14px;
+  color: #555;
+}
+
+.rent {
   font-weight: 600;
-  text-transform: capitalize;
-  padding: 4px 10px;
+  margin: 6px 0;
+}
+
+/* STATUS */
+.status {
+  display: inline-block;
+  font-size: 13px;
+  padding: 5px 12px;
   border-radius: 20px;
+  text-transform: capitalize;
+  font-weight: 600;
 }
 
 .status.pending {
@@ -48,8 +84,24 @@
   color: #b91c1c;
 }
 
-.empty {
+/* EMPTY & LOADING */
+.empty,
+.loading {
   text-align: center;
-  margin-top: 60px;
+  margin-top: 80px;
   color: #777;
+  font-size: 16px;
+}
+
+/* MOBILE */
+@media (max-width: 500px) {
+  .request-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .request-room-image {
+    width: 100%;
+    height: 180px;
+  }
 }

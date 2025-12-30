@@ -17,13 +17,27 @@ const AddRoom = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ NEW STATES
   const [availableNow, setAvailableNow] = useState(true);
   const [availableFrom, setAvailableFrom] = useState("");
+  const [availableFor, setAvailableFor] = useState([]);
+
+  const toggleAvailableFor = (value) => {
+    setAvailableFor((prev) =>
+      prev.includes(value)
+        ? prev.filter((v) => v !== value)
+        : [...prev, value]
+    );
+  };
 
   const handleAddRoom = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    if (availableFor.length === 0) {
+      alert("Please select who the room is available for");
+      setLoading(false);
+      return;
+    }
 
     if (!availableNow && !availableFrom) {
       alert("Please select available date");
@@ -60,6 +74,7 @@ const AddRoom = () => {
         status: "available",
         availableNow,
         availableFrom: availableNow ? null : availableFrom,
+        availableFor,
         createdAt: new Date(),
       });
 
@@ -111,15 +126,36 @@ const AddRoom = () => {
           />
         </div>
 
-        {/* ✅ Availability */}
-        <div className="form-group checkbox-group">
-          <label>
-            <input
-              type="checkbox"
-              checked={availableNow}
-              onChange={(e) => setAvailableNow(e.target.checked)}
-            />
-            Room is available now
+        {/* Available For */}
+        <div className="form-group">
+          <label>Available For</label>
+          <div className="checkbox-grid">
+            {["family", "boys", "girls"].map((type) => (
+              <label key={type}>
+                <input
+                  type="checkbox"
+                  checked={availableFor.includes(type)}
+                  onChange={() => toggleAvailableFor(type)}
+                />
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Toggle Button */}
+        <div className="form-group">
+          <label className="toggle-label">
+            <span>Room is available now</span>
+
+            <div className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={availableNow}
+                onChange={(e) => setAvailableNow(e.target.checked)}
+              />
+              <span className="slider"></span>
+            </div>
           </label>
         </div>
 
@@ -143,7 +179,6 @@ const AddRoom = () => {
             onChange={(e) => {
               const file = e.target.files[0];
               setImageFile(file);
-
               const reader = new FileReader();
               reader.onloadend = () => setImagePreview(reader.result);
               reader.readAsDataURL(file);
@@ -151,22 +186,10 @@ const AddRoom = () => {
             required
           />
 
-          {imagePreview && (
-            <img
-              src={imagePreview}
-              alt="Preview"
-              style={{
-                marginTop: "10px",
-                width: "100%",
-                borderRadius: "10px",
-                maxHeight: "200px",
-                objectFit: "cover",
-              }}
-            />
-          )}
+          {imagePreview && <img src={imagePreview} alt="Preview" />}
         </div>
 
-        <button disabled={loading} type="submit">
+        <button disabled={loading}>
           {loading ? "Saving..." : "Publish Room"}
         </button>
       </form>

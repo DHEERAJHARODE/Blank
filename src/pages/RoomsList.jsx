@@ -9,6 +9,7 @@ const RoomsList = () => {
   const [searchLocation, setSearchLocation] = useState("");
   const [priceSort, setPriceSort] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState("");
+  const [roomForFilter, setRoomForFilter] = useState(""); // ✅ NEW
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "rooms"), (snapshot) => {
@@ -36,6 +37,10 @@ const RoomsList = () => {
       if (availabilityFilter === "now") return isAvailableNow(room);
       if (availabilityFilter === "next") return !isAvailableNow(room);
       return true;
+    })
+    .filter((room) => {
+      if (!roomForFilter) return true;
+      return room.availableFor?.includes(roomForFilter);
     })
     .sort((a, b) => {
       if (priceSort === "low") return a.rent - b.rent;
@@ -68,6 +73,14 @@ const RoomsList = () => {
           <option value="now">Available Now</option>
           <option value="next">Available Later</option>
         </select>
+
+        {/* ✅ ROOM FOR FILTER */}
+        <select onChange={(e) => setRoomForFilter(e.target.value)}>
+          <option value="">Room For</option>
+          <option value="boys">Boys</option>
+          <option value="girls">Girls</option>
+          <option value="family">Family</option>
+        </select>
       </div>
 
       {filteredRooms.length === 0 && (
@@ -83,13 +96,14 @@ const RoomsList = () => {
           return (
             <Link to={`/room/${room.id}`} className="room-link" key={room.id}>
               <div className="room-card">
-                {/* BADGE OUTSIDE IMAGE */}
                 <span
                   className={`availability-badge ${
                     availableNow ? "now" : "later"
                   }`}
                 >
-                  {availableNow ? "Available Now" : `From ${room.availableFrom}`}
+                  {availableNow
+                    ? "Available Now"
+                    : `From ${room.availableFrom}`}
                 </span>
 
                 <div className="room-image">
@@ -103,6 +117,15 @@ const RoomsList = () => {
                 <div className="room-info">
                   <h3>{room.title}</h3>
                   <p className="location">📍 {room.location}</p>
+
+                  {/* ROOM FOR TAG */}
+                  <div className="room-for">
+                    {room.availableFor?.map((type) => (
+                      <span key={type} className="room-for-tag">
+                        {type}
+                      </span>
+                    ))}
+                  </div>
 
                   <div className="room-footer">
                     <span className="price">₹{room.rent}/month</span>

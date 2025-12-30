@@ -29,28 +29,22 @@
   margin-bottom: 10px;
 }
 
-/* ✅ GOOGLE BUTTON */
+/* GOOGLE BUTTON */
 .google-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-
   width: 100%;
   padding: 12px;
-
   background: #ffffff;
   color: #1f1f1f;
-
   border: 1px solid #dadce0;
   border-radius: 12px;
-
   font-size: 14px;
   font-weight: 500;
   font-family: "Roboto", Arial, sans-serif;
-
   cursor: pointer;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .google-btn img {
@@ -58,16 +52,6 @@
   height: 18px;
 }
 
-.google-btn:hover {
-  background: #f7f8f8;
-  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3);
-}
-
-.google-btn:active {
-  background: #f1f3f4;
-}
-
-/* OR DIVIDER */
 .divider {
   display: flex;
   align-items: center;
@@ -89,7 +73,6 @@
   padding: 0 10px;
 }
 
-/* INPUTS */
 .login-card input {
   padding: 12px;
   border-radius: 10px;
@@ -102,7 +85,6 @@
   border-color: #4f46e5;
 }
 
-/* SUBMIT BUTTON */
 button[type="submit"] {
   margin-top: 12px;
   padding: 12px;
@@ -119,13 +101,14 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* REGISTER TEXT */
-.register-text {
+.register-text,
+.forgot-text {
   text-align: center;
   font-size: 14px;
 }
 
-.register-text span {
+.register-text span,
+.forgot-text {
   color: #4f46e5;
   cursor: pointer;
   font-weight: 500;

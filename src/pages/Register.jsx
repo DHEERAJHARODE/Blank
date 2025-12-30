@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  signOut,
+} from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
 import { useNavigate } from "react-router-dom";
@@ -20,15 +24,27 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const res = await createUserWithEmailAndPassword(auth, email, password);
+      const res = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
+      // ✅ Send verification email
+      await sendEmailVerification(res.user);
+
+      // ✅ Save user
       await setDoc(doc(db, "users", res.user.uid), {
         email,
         role,
         createdAt: new Date(),
       });
 
-      navigate("/login");
+      // 🔥 VERY IMPORTANT: LOGOUT USER
+      await signOut(auth);
+
+      // ✅ Go to verify page
+      navigate("/verify-email");
     } catch (err) {
       alert(err.message);
     } finally {
@@ -44,7 +60,6 @@ const Register = () => {
           Join trusted room owners & seekers
         </p>
 
-        {/* ✅ GOOGLE BUTTON */}
         <button
           type="button"
           className="google-btn"
@@ -75,9 +90,9 @@ const Register = () => {
           onChange={(e) => setPassword(e.target.value)}
         />
 
+        {/* ROLE */}
         <div className="role-section">
           <p className="role-title">I am here to</p>
-
           <div className="role-options">
             <div
               className={`role-card ${
@@ -91,7 +106,9 @@ const Register = () => {
             </div>
 
             <div
-              className={`role-card ${role === "owner" ? "active" : ""}`}
+              className={`role-card ${
+                role === "owner" ? "active" : ""
+              }`}
               onClick={() => setRole("owner")}
             >
               🏠
@@ -104,13 +121,6 @@ const Register = () => {
         <button type="submit" disabled={loading}>
           {loading ? "Creating account..." : "Get Started"}
         </button>
-
-        <p className="login-text">
-          Already have an account?{" "}
-          <span onClick={() => navigate("/login")}>
-            Login
-          </span>
-        </p>
       </form>
     </div>
   );

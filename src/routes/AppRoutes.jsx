@@ -14,6 +14,8 @@ import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute"; // optional: redirect logged-in users
 import Profile from "../pages/Profile";
 import MyRequests from "../pages/MyRequests";
+import ForgotPassword from "../pages/ForgotPassword";
+import VerifyEmail from "../pages/VerifyEmail";
 
 const AppRoutes = () => {
   return (
@@ -85,6 +87,8 @@ const AppRoutes = () => {
       <Route path="/choose-role" element={<ChooseRole />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/my-requests" element={<MyRequests />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/verify-email" element={<VerifyEmail/>} />
     </Routes>
   );
 };

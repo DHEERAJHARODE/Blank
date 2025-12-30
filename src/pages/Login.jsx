@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
 import { auth, db, messaging } from "../firebase/firebaseConfig";
 import { getToken } from "firebase/messaging";
 import { doc, updateDoc } from "firebase/firestore";
@@ -40,7 +43,23 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await signInWithEmailAndPassword(auth, email, password);
+      const res = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      // 🚨 BLOCK UNVERIFIED USERS
+      if (!res.user.emailVerified) {
+        await signOut(auth);
+        alert(
+          "Please verify your email first. Check inbox or spam."
+        );
+        setLoading(false);
+        return;
+      }
+
+      // ✅ VERIFIED USER
       await saveFcmToken(res.user);
       navigate("/dashboard");
     } catch (err) {
@@ -56,7 +75,6 @@ const Login = () => {
         <h2>Welcome Back</h2>
         <p className="subtitle">Login to access your account</p>
 
-        {/* ✅ GOOGLE BUTTON */}
         <button
           type="button"
           className="google-btn"
@@ -91,9 +109,18 @@ const Login = () => {
           {loading ? "Logging in..." : "Login"}
         </button>
 
+        <p
+          className="forgot-text"
+          onClick={() => navigate("/forgot-password")}
+        >
+          Forgot Password?
+        </p>
+
         <p className="register-text">
           Don't have an account?{" "}
-          <span onClick={() => navigate("/register")}>Register</span>
+          <span onClick={() => navigate("/register")}>
+            Register
+          </span>
         </p>
       </form>
     </div>

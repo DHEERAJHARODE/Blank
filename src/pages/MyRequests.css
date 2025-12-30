@@ -29,6 +29,7 @@
   display: flex;
   gap: 16px;
   align-items: center;
+  flex-wrap: wrap; /* allow wrapping of buttons */
 }
 
 /* IMAGE */
@@ -42,6 +43,7 @@
 /* INFO */
 .request-info {
   flex: 1;
+  min-width: 150px; /* ensures info doesn't shrink too much */
 }
 
 .request-info h4 {
@@ -89,10 +91,12 @@
   margin-top: 12px;
   display: flex;
   gap: 12px;
+  flex-wrap: wrap; /* buttons wrap if necessary */
 }
 
 .chat-btn,
 .visit-btn {
+  flex: 1 1 calc(50% - 6px); /* each button takes ~50% width minus gap */
   padding: 8px 14px;
   border-radius: 8px;
   text-decoration: none;
@@ -100,6 +104,7 @@
   font-size: 14px;
   font-weight: 500;
   transition: transform 0.2s ease;
+  text-align: center;
 }
 
 .chat-btn {
@@ -137,13 +142,13 @@
   }
 
   .request-actions {
-    flex-direction: column;
+    flex-wrap: wrap; /* ensure buttons remain side by side */
+    gap: 8px;
     width: 100%;
   }
 
   .chat-btn,
   .visit-btn {
-    width: 100%;
-    text-align: center;
+    flex: 1 1 calc(50% - 4px); /* each button ~50% width */
   }
 }
